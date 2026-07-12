@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-07-12
+
+### Fixed
+
+- `Get-AotReservedInstanceRecommendation` failed on Az.Advisor 3.x with
+  "Parameter set cannot be resolved": the autorest rewrite removed
+  subscription-wide `-Category` filtering. The collector now uses
+  `-Filter "Category eq 'Cost'"` on 3.x and keeps `-Category Cost` on 2.x, and
+  reads `ExtendedProperty` in both its hashtable (2.x) and typed-object (3.x)
+  shapes.
+
 ## [1.1.1] - 2026-07-12
 
 ### Fixed
@@ -97,7 +108,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pester test suite, PSScriptAnalyzer configuration, task-based `build.ps1`,
   GitHub Actions CI (lint + test matrix) and tag-triggered PSGallery publish.
 
-[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.0.1...v1.0.2
