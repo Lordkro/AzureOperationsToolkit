@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-07-12
+
+### Fixed
+
+- `Get-AotKeyVaultAudit` no longer prints the Az.KeyVault "upcoming breaking
+  change" banner per vault for `Get-AzKeyVaultSecret`/`Get-AzKeyVaultKey`. The
+  announced change (certificate-backed items excluded from listings) is already
+  handled in code, so the warning stream is silenced on those two calls only —
+  no global or module-wide suppression.
+
 ## [1.1.0] - 2026-07-12
 
 ### Added
@@ -87,7 +97,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pester test suite, PSScriptAnalyzer configuration, task-based `build.ps1`,
   GitHub Actions CI (lint + test matrix) and tag-triggered PSGallery publish.
 
-[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.0.0...v1.0.1

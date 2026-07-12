@@ -50,13 +50,16 @@ function Get-AotKeyVaultAudit {
                 # through Get-AzKeyVaultCertificate below, and Az.KeyVault 7.0.0
                 # stops returning them from these listings anyway — filtering now
                 # adopts that behaviour early and avoids double-counting.
-                foreach ($s in (Get-AzKeyVaultSecret -VaultName $v.VaultName -ErrorAction SilentlyContinue)) {
+                # -WarningAction: Az prints its "upcoming breaking change" banner
+                # on every one of these calls even though the change is already
+                # handled here; silence it for these two calls only.
+                foreach ($s in (Get-AzKeyVaultSecret -VaultName $v.VaultName -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)) {
                     if ($s.Managed) { continue }
                     if ($s.Expires -and $s.Expires -le $cutoff) {
                         $expiring.Add(@{ Kind = 'Secret'; Name = $s.Name; Expires = $s.Expires })
                     }
                 }
-                foreach ($k in (Get-AzKeyVaultKey -VaultName $v.VaultName -ErrorAction SilentlyContinue)) {
+                foreach ($k in (Get-AzKeyVaultKey -VaultName $v.VaultName -ErrorAction SilentlyContinue -WarningAction SilentlyContinue)) {
                     if ($k.Managed) { continue }
                     if ($k.Expires -and $k.Expires -le $cutoff) {
                         $expiring.Add(@{ Kind = 'Key'; Name = $k.Name; Expires = $k.Expires })
