@@ -39,6 +39,21 @@ Test-AotDependency                  # what is missing and which commands it bloc
 Test-AotDependency -InstallMissing  # install the gaps (CurrentUser)
 ```
 
+### Microsoft Graph permissions
+
+The identity checks run against Microsoft Graph and need a `Connect-MgGraph`
+session. Scopes per command (delegated; or the equivalent application
+permissions for unattended runs):
+
+| Command | Scopes |
+| --- | --- |
+| `Get-AotStaleGuestAccount` | `User.Read.All`, `AuditLog.Read.All` |
+| `Get-AotMfaGap` | `UserAuthenticationMethod.Read.All`, `AuditLog.Read.All` |
+| `Get-AotPimAssignment`, `Get-AotExpiringPimRole` | `RoleManagement.Read.Directory` |
+
+The commands fail fast with the exact `Connect-MgGraph -Scopes ...` line when
+the session is missing or under-scoped.
+
 ## Install
 
 ```powershell
@@ -57,6 +72,11 @@ Import-Module ./src/AzureOperationsToolkit.psd1
 
 # Sign in (interactive, managed identity, or service principal)
 Connect-AotAzure
+
+# The Graph-based checks (stale guests, PIM, MFA gaps) also need a
+# Microsoft Graph session with these scopes:
+Connect-MgGraph -Scopes 'User.Read.All', 'AuditLog.Read.All',
+                        'UserAuthenticationMethod.Read.All', 'RoleManagement.Read.Directory'
 
 # Optional: tune logging / parallelism / thresholds
 Set-AotConfiguration -LogLevel Information -ThrottleLimit 12

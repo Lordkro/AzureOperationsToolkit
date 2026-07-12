@@ -18,9 +18,12 @@ For Graph-backed checks (stale guests, PIM, MFA), also connect Microsoft Graph
 with the appropriate scopes:
 
 ```powershell
-Connect-MgGraph -Scopes 'Directory.Read.All', 'RoleManagement.Read.Directory',
-                        'AuditLog.Read.All', 'UserAuthenticationMethod.Read.All'
+Connect-MgGraph -Scopes 'User.Read.All', 'AuditLog.Read.All',
+                        'UserAuthenticationMethod.Read.All', 'RoleManagement.Read.Directory'
 ```
+
+Per-command scope details are in the README's "Microsoft Graph permissions"
+section; each Graph command also names its required scopes when it fails.
 
 ## Configuration
 
