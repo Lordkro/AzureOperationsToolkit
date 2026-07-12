@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-07-12
+
+### Fixed
+
+- `Get-AotDiagnosticSetting` no longer prints the Az.Monitor "upcoming breaking
+  change" banner per resource. The announced change (Log/Metric properties
+  becoming List-typed) cannot affect the collector — it only reads setting names
+  and counts — so the warning stream is silenced on that one call.
+
 ## [1.1.2] - 2026-07-12
 
 ### Fixed
@@ -108,7 +117,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pester test suite, PSScriptAnalyzer configuration, task-based `build.ps1`,
   GitHub Actions CI (lint + test matrix) and tag-triggered PSGallery publish.
 
-[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.0.2...v1.1.0

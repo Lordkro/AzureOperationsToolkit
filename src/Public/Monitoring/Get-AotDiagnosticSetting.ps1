@@ -45,7 +45,11 @@ function Get-AotDiagnosticSetting {
         $checked = $resources | ForEach-Object -ThrottleLimit $throttle -Parallel {
             $r = $_
             try {
-                $ds = Get-AzDiagnosticSetting -ResourceId $r.ResourceId -ErrorAction Stop
+                # -WarningAction: Az announces an output change to the Log/Metric
+                # properties on every call; this collector only reads setting
+                # names and counts, so the change cannot affect it — silence the
+                # banner for this call only.
+                $ds = Get-AzDiagnosticSetting -ResourceId $r.ResourceId -ErrorAction Stop -WarningAction SilentlyContinue
                 [pscustomobject]@{ Resource = $r; Settings = @($ds); Error = $null }
             }
             catch {
