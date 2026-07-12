@@ -11,13 +11,6 @@ $ErrorActionPreference = 'Stop'
 
 $script:ModuleRoot = $PSScriptRoot
 
-# Az cmdlets print "upcoming breaking change" banners on many of the calls this
-# module makes; in an assessment sweep that is hundreds of lines of noise. The
-# env var is honoured by all Az modules without requiring Az.Accounts loaded.
-if (-not $env:SuppressAzurePowerShellBreakingChangeWarnings) {
-    $env:SuppressAzurePowerShellBreakingChangeWarnings = 'true'
-}
-
 # Module-scoped state shared by the framework functions.
 $script:AotConfig = [ordered]@{
     LogPath          = Join-Path ([System.IO.Path]::GetTempPath()) 'AzureOperationsToolkit'

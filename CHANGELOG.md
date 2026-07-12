@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-07-12
+
+### Changed
+
+- Az "upcoming breaking change" warnings are no longer suppressed; the announced
+  changes are handled in code instead.
+- `Get-AotKeyVaultAudit` now skips Managed (certificate-backed) secrets and keys
+  when scanning for expiry, adopting the Az.KeyVault 7.0.0 listing behaviour
+  early. Certificate expiry is still audited via `Get-AzKeyVaultCertificate`,
+  which also removes the previous double-counting of certificate-backed items.
+
+### Removed
+
+- Process-wide `SuppressAzurePowerShellBreakingChangeWarnings` and the
+  `Update-AzConfig -DisplayBreakingChangeWarning $false` call added in 1.0.1.
+
 ## [1.0.1] - 2026-07-12
 
 ### Fixed
@@ -57,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pester test suite, PSScriptAnalyzer configuration, task-based `build.ps1`,
   GitHub Actions CI (lint + test matrix) and tag-triggered PSGallery publish.
 
-[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Lordkro/AzureOperationsToolkit/releases/tag/v1.0.0
