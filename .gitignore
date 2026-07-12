@@ -1,0 +1,23 @@
+# Build output
+out/
+*.log
+
+# PowerShell
+*.ps1xml.bak
+
+# Azure / secrets
+*.publishsettings
+*.pfx
+.azure/
+appsettings.local.json
+
+# Editor
+.vs/
+.vscode/*
+!.vscode/extensions.json
+*.suo
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
