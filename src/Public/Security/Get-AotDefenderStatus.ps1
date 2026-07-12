@@ -28,7 +28,7 @@ function Get-AotDefenderStatus {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'DefenderStatus' -Message "Defender plans for '$($sub.Name)'"
 
-        $plans = Invoke-AotOperation -Operation "DefenderStatus:$($sub.Id)" -ScriptBlock {
+        $plans = Invoke-AotOperation -Operation "DefenderStatus:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
             Get-AzSecurityPricing
         }

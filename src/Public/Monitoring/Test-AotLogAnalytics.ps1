@@ -33,15 +33,19 @@ function Test-AotLogAnalytics {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'LogAnalytics' -Message "Workspaces for '$($sub.Name)'"
 
-        $workspaces = Invoke-AotOperation -Operation "LogAnalytics:$($sub.Id)" -ScriptBlock {
+        $workspaces = Invoke-AotOperation -Operation "LogAnalytics:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
             Get-AzOperationalInsightsWorkspace
         }
 
         foreach ($w in $workspaces) {
+            # Workspace shapes vary across Az.OperationalInsights versions.
+            $retention = (Get-AotMember $w 'RetentionInDays') ?? (Get-AotMember $w 'retentionInDays')
+            $provState = Get-AotMember $w 'ProvisioningState'
+
             $issues = @()
-            if ($w.RetentionInDays -lt $MinRetentionDays) { $issues += "RetentionBelow${MinRetentionDays}d" }
-            if ($w.ProvisioningState -ne 'Succeeded')      { $issues += "ProvisioningState:$($w.ProvisioningState)" }
+            if ($null -ne $retention -and $retention -lt $MinRetentionDays) { $issues += "RetentionBelow${MinRetentionDays}d" }
+            if ($provState -and $provState -ne 'Succeeded') { $issues += "ProvisioningState:$provState" }
 
             # Best-effort heartbeat freshness check.
             $lastHeartbeat = $null
@@ -59,13 +63,13 @@ function Test-AotLogAnalytics {
             }
 
             New-AotFinding -Category 'Monitoring' -Type 'LogAnalyticsWorkspace' `
-                -Name $w.Name -ResourceId $w.ResourceId `
-                -ResourceGroup $w.ResourceGroupName -Location $w.Location `
+                -Name (Get-AotMember $w 'Name') -ResourceId (Get-AotMember $w 'ResourceId') `
+                -ResourceGroup (Get-AotMember $w 'ResourceGroupName') -Location (Get-AotMember $w 'Location') `
                 -Severity ($issues ? 'Medium' : 'Informational') `
                 -SubscriptionId $sub.Id -SubscriptionName $sub.Name `
                 -Detail @{
-                    RetentionInDays = $w.RetentionInDays
-                    Sku             = $w.Sku
+                    RetentionInDays = $retention
+                    Sku             = (Get-AotMember $w 'Sku')
                     Issues          = $issues
                     LastHeartbeat   = $lastHeartbeat
                 }

@@ -17,6 +17,11 @@ function Invoke-AotOperation {
     .PARAMETER MaxRetryCount
         Overrides the module default retry count.
 
+    .PARAMETER SkipOnError
+        Log the terminal failure as a warning and return nothing instead of
+        throwing. Collectors use this for per-subscription calls so one failing
+        subscription (e.g. AuthorizationFailed) doesn't abort the remaining ones.
+
     .EXAMPLE
         Invoke-AotOperation -Operation 'Get resources' -ScriptBlock { Get-AzResource }
     #>
@@ -30,7 +35,9 @@ function Invoke-AotOperation {
 
         [int]$MaxRetryCount = $script:AotConfig.MaxRetryCount,
 
-        [int]$RetryDelaySeconds = $script:AotConfig.RetryDelaySeconds
+        [int]$RetryDelaySeconds = $script:AotConfig.RetryDelaySeconds,
+
+        [switch]$SkipOnError
     )
 
     $transientPatterns = @(
@@ -55,6 +62,12 @@ function Invoke-AotOperation {
                     -Message "Transient failure (attempt $attempt): $msg. Retrying in ${delay}s."
                 Start-Sleep -Seconds $delay
                 continue
+            }
+
+            if ($SkipOnError) {
+                Write-AotLog -Level Warning -Operation $Operation `
+                    -Message "Operation skipped after $attempt attempt(s): $msg"
+                return
             }
 
             Write-AotLog -Level Error -Operation $Operation `

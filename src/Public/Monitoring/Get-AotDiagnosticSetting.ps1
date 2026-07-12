@@ -34,7 +34,7 @@ function Get-AotDiagnosticSetting {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'DiagnosticSetting' -Message "Diagnostic coverage for '$($sub.Name)'"
 
-        $resources = Invoke-AotOperation -Operation "DiagnosticSetting:$($sub.Id)" -ScriptBlock {
+        $resources = Invoke-AotOperation -Operation "DiagnosticSetting:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
             $all = Get-AzResource
             if ($ResourceType) { $all = $all | Where-Object ResourceType -eq $ResourceType }
@@ -69,7 +69,9 @@ function Get-AotDiagnosticSetting {
                     ResourceType    = $c.Resource.ResourceType
                     HasSetting      = $hasSetting
                     SettingCount    = $c.Settings.Count
-                    SettingNames    = @($c.Settings.Name)
+                    # Newer Az.Monitor diagnostic-setting objects don't expose a
+                    # Name property on every shape; probe instead of dotting.
+                    SettingNames    = @($c.Settings | ForEach-Object { Get-AotMember $_ 'Name' })
                 }
         }
     }

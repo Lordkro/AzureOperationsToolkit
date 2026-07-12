@@ -24,21 +24,35 @@ function Get-AotMonitorAlert {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'MonitorAlert' -Message "Alert rules for '$($sub.Name)'"
 
-        $rules = Invoke-AotOperation -Operation "MonitorAlert:$($sub.Id)" -ScriptBlock {
+        $rules = Invoke-AotOperation -Operation "MonitorAlert:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
-            $metric = @()
+
+            # Property names differ across Az.Monitor generations (e.g. newer
+            # ScheduledQueryRule output has no ResourceGroupName); probe safely
+            # and derive the resource group from the ARM id instead.
+            $normalise = {
+                param($rule, $kind)
+                $id = Get-AotMember $rule 'Id'
+                $rg = (Get-AotMember $rule 'ResourceGroupName') ??
+                      $(if ($id -match '/resourceGroups/([^/]+)/') { $Matches[1] })
+                $enabled = Get-AotMember $rule 'Enabled' -Default $true
+                [pscustomobject]@{
+                    Name    = (Get-AotMember $rule 'Name')
+                    Id      = $id
+                    Enabled = -not ($enabled -in $false, 'false', 'False')
+                    Kind    = $kind
+                    Rg      = $rg
+                }
+            }
+
+            $all = @()
             if (Get-Command Get-AzMetricAlertRuleV2 -ErrorAction SilentlyContinue) {
-                $metric = Get-AzMetricAlertRuleV2 | ForEach-Object {
-                    [pscustomobject]@{ Name = $_.Name; Id = $_.Id; Enabled = $_.Enabled; Kind = 'Metric'; Rg = $_.ResourceGroupName }
-                }
+                $all += Get-AzMetricAlertRuleV2 | ForEach-Object { & $normalise $_ 'Metric' }
             }
-            $sq = @()
             if (Get-Command Get-AzScheduledQueryRule -ErrorAction SilentlyContinue) {
-                $sq = Get-AzScheduledQueryRule | ForEach-Object {
-                    [pscustomobject]@{ Name = $_.Name; Id = $_.Id; Enabled = ($_.Enabled -ne 'false'); Kind = 'ScheduledQuery'; Rg = $_.ResourceGroupName }
-                }
+                $all += Get-AzScheduledQueryRule | ForEach-Object { & $normalise $_ 'ScheduledQuery' }
             }
-            $metric + $sq
+            $all
         }
 
         foreach ($rule in $rules) {

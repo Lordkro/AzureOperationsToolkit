@@ -24,15 +24,17 @@ function Get-AotOwnerAssignment {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'OwnerAssignment' -Message "Owner assignments for '$($sub.Name)'"
 
-        $owners = Invoke-AotOperation -Operation "OwnerAssignment:$($sub.Id)" -ScriptBlock {
+        $owners = Invoke-AotOperation -Operation "OwnerAssignment:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
             Get-AzRoleAssignment -RoleDefinitionName 'Owner'
         }
 
         foreach ($o in $owners) {
             $severity = if ($o.Scope -match '^/subscriptions/[^/]+$') { 'High' } else { 'Medium' }
+            # Deleted principals have an empty DisplayName; fall back to object id.
+            $name = if ([string]::IsNullOrWhiteSpace($o.DisplayName)) { $o.ObjectId } else { $o.DisplayName }
             New-AotFinding -Category 'Governance' -Type 'OwnerAssignment' `
-                -Name $o.DisplayName -ResourceId $o.RoleAssignmentId -Severity $severity `
+                -Name $name -ResourceId $o.RoleAssignmentId -Severity $severity `
                 -SubscriptionId $sub.Id -SubscriptionName $sub.Name `
                 -Detail @{
                     PrincipalType = $o.ObjectType

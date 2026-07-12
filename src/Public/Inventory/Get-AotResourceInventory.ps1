@@ -29,10 +29,13 @@ function Get-AotResourceInventory {
             Write-AotLog -Level Information -Operation 'ResourceInventory' `
                 -Message "Collecting resources for '$($sub.Name)'"
 
-            $resources = Invoke-AotOperation -Operation "ResourceInventory:$($sub.Id)" -ScriptBlock {
+            $resources = Invoke-AotOperation -Operation "ResourceInventory:$($sub.Id)" -SkipOnError -ScriptBlock {
                 if ($useGraph) {
                     $query = 'Resources | project id, name, type, location, resourceGroup, tags, sku, kind'
-                    Search-AzGraph -Query $query -Subscription $sub.Id -First 1000
+                    $result = Search-AzGraph -Query $query -Subscription $sub.Id -First 1000
+                    # Depending on Az.ResourceGraph version the rows come back
+                    # directly or wrapped in a response object with a Data property.
+                    if ($result -and $result.PSObject.Properties['Data']) { $result.Data } else { $result }
                 }
                 else {
                     Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
@@ -42,17 +45,12 @@ function Get-AotResourceInventory {
 
             foreach ($r in $resources) {
                 # Az (Get-AzResource) and Resource Graph return differently-named
-                # and sometimes-absent properties; probe both safely under StrictMode.
-                $tags = Get-AotMember $r 'Tags'
-                # Outer @() keeps a single-key result an array (the if-expression
-                # would otherwise unwrap it to a scalar, breaking .Count under StrictMode).
-                $tagKeys = @(
-                    if ($tags -is [System.Collections.IDictionary]) { $tags.Keys }
-                    elseif ($tags) { $tags.PSObject.Properties.Name }
-                )
+                # and sometimes-absent properties; probe everything safely under
+                # StrictMode.
+                $tagKeys = Get-AotTagKey -Tags (Get-AotMember $r 'Tags')
 
                 New-AotFinding -Category 'Inventory' -Type 'Resource' `
-                    -Name $r.Name `
+                    -Name (Get-AotMember $r 'Name') `
                     -ResourceId ((Get-AotMember $r 'ResourceId') ?? (Get-AotMember $r 'Id')) `
                     -ResourceGroup ((Get-AotMember $r 'ResourceGroupName') ?? (Get-AotMember $r 'ResourceGroup')) `
                     -Location (Get-AotMember $r 'Location') `

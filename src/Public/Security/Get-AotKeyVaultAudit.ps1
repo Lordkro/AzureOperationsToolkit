@@ -32,7 +32,7 @@ function Get-AotKeyVaultAudit {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'KeyVaultAudit' -Message "Key Vaults for '$($sub.Name)'"
 
-        $vaults = Invoke-AotOperation -Operation "KeyVaultList:$($sub.Id)" -ScriptBlock {
+        $vaults = Invoke-AotOperation -Operation "KeyVaultList:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
             Get-AzKeyVault
         }

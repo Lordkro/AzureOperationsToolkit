@@ -20,7 +20,7 @@ function Get-AotUnattachedDisk {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'UnattachedDisk' -Message "Disks for '$($sub.Name)'"
 
-        $disks = Invoke-AotOperation -Operation "UnattachedDisk:$($sub.Id)" -ScriptBlock {
+        $disks = Invoke-AotOperation -Operation "UnattachedDisk:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
             Get-AzDisk | Where-Object { $_.DiskState -eq 'Unattached' -and -not $_.ManagedBy }
         }

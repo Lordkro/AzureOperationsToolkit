@@ -20,12 +20,13 @@ function Get-AotResourceGroupInventory {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'RgInventory' -Message "Resource groups for '$($sub.Name)'"
 
-        $data = Invoke-AotOperation -Operation "RgInventory:$($sub.Id)" -ScriptBlock {
+        $data = Invoke-AotOperation -Operation "RgInventory:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
             $groups    = Get-AzResourceGroup
             $resources = Get-AzResource
             [pscustomobject]@{ Groups = $groups; Resources = $resources }
         }
+        if (-not $data) { continue }
 
         $countByRg = $data.Resources | Group-Object ResourceGroupName -AsHashTable -AsString
 
@@ -41,7 +42,7 @@ function Get-AotResourceGroupInventory {
                 -Detail @{
                     ResourceCount = $count
                     ProvisioningState = $rg.ProvisioningState
-                    TagCount = @($rg.Tags.Keys).Count
+                    TagCount = (Get-AotTagKey -Tags $rg.Tags).Count
                 }
         }
     }

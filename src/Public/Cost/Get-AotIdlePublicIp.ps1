@@ -24,7 +24,7 @@ function Get-AotIdlePublicIp {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'IdlePublicIp' -Message "Public IPs for '$($sub.Name)'"
 
-        $ips = Invoke-AotOperation -Operation "IdlePublicIp:$($sub.Id)" -ScriptBlock {
+        $ips = Invoke-AotOperation -Operation "IdlePublicIp:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
             Get-AzPublicIpAddress | Where-Object { -not $_.IpConfiguration -and -not $_.NatGateway }
         }

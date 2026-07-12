@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-07-12
+
+### Fixed
+
+- StrictMode crashes on real tenants: null/`pscustomobject` tags no longer break
+  `Get-AotResourceGroupInventory`, `Get-AotMissingTag`, `Get-AotEmptyResourceGroup`
+  or `Get-AotResourceInventory` (new `Get-AotTagKey` helper).
+- Role assignments for deleted principals (empty `DisplayName`) no longer abort
+  RBAC, Owner and direct-user collectors; findings fall back to the object id.
+- `Get-AotMonitorAlert` no longer fails on newer Az.Monitor output that dropped
+  `ResourceGroupName` from scheduled-query rules; the resource group is derived
+  from the ARM id. `Get-AotActionGroup`, `Get-AotDiagnosticSetting` and
+  `Test-AotLogAnalytics` now probe version-dependent properties safely.
+- `Get-AotResourceInventory` handles both Az.ResourceGraph result shapes
+  (bare rows and `.Data`-wrapped responses).
+
+### Added
+
+- Per-subscription resilience: a failing subscription (e.g. AuthorizationFailed)
+  is logged and skipped instead of aborting the whole collector
+  (`Invoke-AotOperation -SkipOnError`).
+- Subscription-scope caching: a full `New-AotReport` run now calls
+  `Get-AzSubscription` once instead of once per collector, reducing ARM
+  throttling. The cache clears on `Connect-AotAzure`.
+- Az "upcoming breaking change" banners are suppressed for the process
+  (`SuppressAzurePowerShellBreakingChangeWarnings`, plus `Update-AzConfig`
+  best-effort in `Connect-AotAzure`).
+
 ## [1.0.0] - 2026-07-12
 
 ### Added
@@ -29,5 +57,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pester test suite, PSScriptAnalyzer configuration, task-based `build.ps1`,
   GitHub Actions CI (lint + test matrix) and tag-triggered PSGallery publish.
 
-[Unreleased]: https://github.com/example/AzureOperationsToolkit/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/example/AzureOperationsToolkit/releases/tag/v1.0.0
+[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.0.0...v1.0.1
+[1.0.0]: https://github.com/Lordkro/AzureOperationsToolkit/releases/tag/v1.0.0

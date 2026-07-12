@@ -28,6 +28,26 @@ Describe 'New-AotFinding' {
             { New-AotFinding -Category 'X' -Type 'Y' -Name 'Z' -Severity 'Bogus' } | Should -Throw
         }
     }
+
+    It 'tolerates an empty or null name (deleted principals)' {
+        InModuleScope AzureOperationsToolkit {
+            (New-AotFinding -Category 'X' -Type 'Y' -Name '').Name | Should -Be '(unnamed)'
+            (New-AotFinding -Category 'X' -Type 'Y' -Name $null).Name | Should -Be '(unnamed)'
+        }
+    }
+}
+
+Describe 'Get-AotTagKey' {
+    It 'handles every tag shape without throwing' {
+        InModuleScope AzureOperationsToolkit {
+            (Get-AotTagKey -Tags $null).Count | Should -Be 0
+            (Get-AotTagKey -Tags @{}).Count | Should -Be 0
+            (Get-AotTagKey -Tags @{ Owner = 'a' }).Count | Should -Be 1
+            (Get-AotTagKey -Tags @{ Owner = 'a'; Env = 'p' }).Count | Should -Be 2
+            # Resource Graph returns tags as a pscustomobject, not a hashtable.
+            (Get-AotTagKey -Tags ([pscustomobject]@{ Owner = 'a' })).Count | Should -Be 1
+        }
+    }
 }
 
 Describe 'Invoke-AotOperation retry' {
@@ -60,6 +80,15 @@ Describe 'Invoke-AotOperation retry' {
                 }
             } | Should -Throw
             $script:attempts | Should -Be 1
+        }
+    }
+
+    It 'returns nothing instead of throwing with -SkipOnError' {
+        InModuleScope AzureOperationsToolkit {
+            $result = Invoke-AotOperation -Operation 'skippable' -SkipOnError -ScriptBlock {
+                throw 'AuthorizationFailed'
+            } 3>$null   # discard the expected warning
+            $result | Should -BeNullOrEmpty
         }
     }
 }

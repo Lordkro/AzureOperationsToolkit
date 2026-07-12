@@ -29,7 +29,7 @@ function Get-AotReservedInstanceRecommendation {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'RiRecommendation' -Message "Advisor cost recs for '$($sub.Name)'"
 
-        $recs = Invoke-AotOperation -Operation "RiRecommendation:$($sub.Id)" -ScriptBlock {
+        $recs = Invoke-AotOperation -Operation "RiRecommendation:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
             Get-AzAdvisorRecommendation -Category Cost
         }

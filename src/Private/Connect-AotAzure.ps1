@@ -40,6 +40,17 @@ function Connect-AotAzure {
         [switch]$Force
     )
 
+    # Silence Az "upcoming breaking change" banners for this process; they add
+    # hundreds of lines of noise to an assessment sweep. Best-effort only.
+    try {
+        if (Get-Command Update-AzConfig -ErrorAction SilentlyContinue) {
+            Update-AzConfig -DisplayBreakingChangeWarning $false -Scope Process -ErrorAction Stop | Out-Null
+        }
+    }
+    catch {
+        Write-AotLog -Level Verbose -Operation 'Connect' -Message "Could not disable breaking-change banners: $($_.Exception.Message)"
+    }
+
     if ((Get-AzContext) -and -not $Force) {
         Write-AotLog -Level Information -Operation 'Connect' -Message 'Reusing existing Azure context.'
     }
@@ -55,6 +66,7 @@ function Connect-AotAzure {
             Connect-AzAccount @params | Out-Null
         }
         Write-AotLog -Level Information -Operation 'Connect' -Message 'Azure sign-in complete.'
+        $script:AotSubscriptionCache.Clear()
     }
 
     if ($SubscriptionId) {

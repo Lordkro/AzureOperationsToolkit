@@ -30,13 +30,13 @@ function Get-AotMissingTag {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'MissingTag' -Message "Tag compliance for '$($sub.Name)'"
 
-        $resources = Invoke-AotOperation -Operation "MissingTag:$($sub.Id)" -ScriptBlock {
+        $resources = Invoke-AotOperation -Operation "MissingTag:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
             Get-AzResource
         }
 
         foreach ($r in $resources) {
-            $present = @($r.Tags.Keys)
+            $present = Get-AotTagKey -Tags $r.Tags
             $missing = $RequiredTag | Where-Object { $_ -notin $present }
             if (-not $missing) { continue }
 

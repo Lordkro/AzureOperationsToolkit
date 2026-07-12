@@ -20,7 +20,7 @@ function Get-AotResourceLockInventory {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'LockInventory' -Message "Resource locks for '$($sub.Name)'"
 
-        $locks = Invoke-AotOperation -Operation "LockInventory:$($sub.Id)" -ScriptBlock {
+        $locks = Invoke-AotOperation -Operation "LockInventory:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
             Get-AzResourceLock
         }

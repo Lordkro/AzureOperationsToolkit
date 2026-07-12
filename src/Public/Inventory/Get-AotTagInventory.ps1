@@ -24,7 +24,7 @@ function Get-AotTagInventory {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'TagInventory' -Message "Tag usage for '$($sub.Name)'"
 
-        $resources = Invoke-AotOperation -Operation "TagInventory:$($sub.Id)" -ScriptBlock {
+        $resources = Invoke-AotOperation -Operation "TagInventory:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
             Get-AzResource
         }

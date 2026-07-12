@@ -24,14 +24,16 @@ function Get-AotRoleAssignmentInventory {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'RbacInventory' -Message "Role assignments for '$($sub.Name)'"
 
-        $assignments = Invoke-AotOperation -Operation "RbacInventory:$($sub.Id)" -ScriptBlock {
+        $assignments = Invoke-AotOperation -Operation "RbacInventory:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
             Get-AzRoleAssignment
         }
 
         foreach ($a in $assignments) {
+            # Deleted principals have an empty DisplayName; fall back to object id.
+            $name = if ([string]::IsNullOrWhiteSpace($a.DisplayName)) { $a.ObjectId } else { $a.DisplayName }
             New-AotFinding -Category 'Inventory' -Type 'RoleAssignment' `
-                -Name $a.DisplayName -ResourceId $a.RoleAssignmentId `
+                -Name $name -ResourceId $a.RoleAssignmentId `
                 -SubscriptionId $sub.Id -SubscriptionName $sub.Name `
                 -Detail @{
                     RoleDefinitionName = $a.RoleDefinitionName

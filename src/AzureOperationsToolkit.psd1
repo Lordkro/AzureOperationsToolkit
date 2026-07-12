@@ -1,6 +1,6 @@
 @{
     RootModule        = 'AzureOperationsToolkit.psm1'
-    ModuleVersion     = '1.0.0'
+    ModuleVersion     = '1.0.1'
     GUID              = 'b8f4c2e1-6a3d-4f9e-9c1b-7d5e2a8f0c4a'
     Author            = 'Azure Operations Toolkit Contributors'
     CompanyName       = 'Community'

@@ -20,7 +20,7 @@ function Get-AotPolicyInventory {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'PolicyInventory' -Message "Policy assignments for '$($sub.Name)'"
 
-        $assignments = Invoke-AotOperation -Operation "PolicyInventory:$($sub.Id)" -ScriptBlock {
+        $assignments = Invoke-AotOperation -Operation "PolicyInventory:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
             Get-AzPolicyAssignment
         }

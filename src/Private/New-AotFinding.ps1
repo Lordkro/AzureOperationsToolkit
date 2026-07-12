@@ -15,7 +15,10 @@ function New-AotFinding {
     param(
         [Parameter(Mandatory)][string]$Category,      # e.g. 'Inventory', 'Security'
         [Parameter(Mandatory)][string]$Type,          # e.g. 'UnattachedDisk'
-        [Parameter(Mandatory)][string]$Name,
+
+        # Deleted/orphaned principals and some ARM objects legitimately have an
+        # empty display name; never let that abort a collection run.
+        [Parameter(Mandatory)][AllowNull()][AllowEmptyString()][string]$Name,
         [string]$ResourceId,
         [string]$ResourceGroup,
         [string]$SubscriptionId,
@@ -27,6 +30,8 @@ function New-AotFinding {
 
         [hashtable]$Detail = @{}
     )
+
+    if ([string]::IsNullOrWhiteSpace($Name)) { $Name = '(unnamed)' }
 
     [pscustomobject]@{
         PSTypeName       = 'Aot.Finding'

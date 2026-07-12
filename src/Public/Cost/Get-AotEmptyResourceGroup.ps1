@@ -20,12 +20,14 @@ function Get-AotEmptyResourceGroup {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'EmptyRg' -Message "Empty resource groups for '$($sub.Name)'"
 
-        $data = Invoke-AotOperation -Operation "EmptyRg:$($sub.Id)" -ScriptBlock {
+        $data = Invoke-AotOperation -Operation "EmptyRg:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
             $groups    = Get-AzResourceGroup
             $resources = Get-AzResource
             [pscustomobject]@{ Groups = $groups; Resources = $resources }
         }
+
+        if (-not $data) { continue }
 
         $nonEmpty = $data.Resources | Group-Object ResourceGroupName -AsHashTable -AsString
 
@@ -38,7 +40,7 @@ function Get-AotEmptyResourceGroup {
                 -SubscriptionId $sub.Id -SubscriptionName $sub.Name `
                 -Detail @{
                     ProvisioningState = $rg.ProvisioningState
-                    TagCount = @($rg.Tags.Keys).Count
+                    TagCount = (Get-AotTagKey -Tags $rg.Tags).Count
                     Recommendation = 'Delete if not a placeholder for pending deployment.'
                 }
         }

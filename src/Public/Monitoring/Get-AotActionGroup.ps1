@@ -28,30 +28,42 @@ function Get-AotActionGroup {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'ActionGroup' -Message "Action groups for '$($sub.Name)'"
 
-        $groups = Invoke-AotOperation -Operation "ActionGroup:$($sub.Id)" -ScriptBlock {
+        $groups = Invoke-AotOperation -Operation "ActionGroup:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
             Get-AzActionGroup
         }
 
         foreach ($g in $groups) {
+            # Receiver property names vary across Az.Monitor generations
+            # (singular vs plural); probe both shapes safely.
+            $receiverProps = @(
+                'EmailReceiver', 'SmsReceiver', 'WebhookReceiver', 'AzureAppPushReceiver',
+                'VoiceReceiver', 'ArmRoleReceiver', 'LogicAppReceiver',
+                'AzureFunctionReceiver', 'EventHubReceiver',
+                'EmailReceivers', 'SmsReceivers', 'WebhookReceivers', 'AzureAppPushReceivers',
+                'VoiceReceivers', 'ArmRoleReceivers', 'LogicAppReceivers',
+                'AzureFunctionReceivers', 'EventHubReceivers'
+            )
             $receiverCount = @(
-                $g.EmailReceiver; $g.SmsReceiver; $g.WebhookReceiver;
-                $g.AzureAppPushReceiver; $g.VoiceReceiver; $g.ArmRoleReceiver;
-                $g.LogicAppReceiver; $g.AzureFunctionReceiver; $g.EventHubReceiver
+                foreach ($p in $receiverProps) { Get-AotMember $g $p }
             ).Where({ $_ }).Count
 
             $problems = @()
             if ($receiverCount -eq 0) { $problems += 'NoReceivers' }
-            if ($g.Enabled -eq $false) { $problems += 'Disabled' }
+            if ((Get-AotMember $g 'Enabled' -Default $true) -eq $false) { $problems += 'Disabled' }
+
+            $agId = (Get-AotMember $g 'Id') ?? (Get-AotMember $g 'ResourceId')
+            $agRg = (Get-AotMember $g 'ResourceGroupName') ??
+                    $(if ($agId -match '/resourceGroups/([^/]+)/') { $Matches[1] })
 
             New-AotFinding -Category 'Monitoring' -Type 'ActionGroup' `
-                -Name $g.Name -ResourceId $g.Id `
-                -ResourceGroup $g.ResourceGroupName -Location $g.Location `
+                -Name (Get-AotMember $g 'Name') -ResourceId $agId `
+                -ResourceGroup $agRg -Location (Get-AotMember $g 'Location') `
                 -Severity ($problems ? 'Medium' : 'Informational') `
                 -SubscriptionId $sub.Id -SubscriptionName $sub.Name `
                 -Detail @{
-                    Enabled       = $g.Enabled
-                    GroupShortName = $g.GroupShortName
+                    Enabled       = (Get-AotMember $g 'Enabled' -Default $true)
+                    GroupShortName = (Get-AotMember $g 'GroupShortName')
                     ReceiverCount = $receiverCount
                     Problems      = $problems
                 }

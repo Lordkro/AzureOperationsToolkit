@@ -28,7 +28,7 @@ function Get-AotPolicyViolation {
     foreach ($sub in $subs) {
         Write-AotLog -Level Information -Operation 'PolicyViolation' -Message "Policy compliance for '$($sub.Name)'"
 
-        $states = Invoke-AotOperation -Operation "PolicyViolation:$($sub.Id)" -ScriptBlock {
+        $states = Invoke-AotOperation -Operation "PolicyViolation:$($sub.Id)" -SkipOnError -ScriptBlock {
             Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
             Get-AzPolicyState -Filter "ComplianceState eq 'NonCompliant'"
         }
