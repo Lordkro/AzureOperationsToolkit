@@ -33,7 +33,8 @@ Describe 'Public surface' {
         $expected = @(
             'Get-AotResourceInventory', 'Get-AotOwnerAssignment', 'Get-AotDefenderStatus',
             'Get-AotUnattachedDisk', 'Get-AotDiagnosticSetting', 'New-AotReport',
-            'Connect-AotAzure', 'Set-AotConfiguration', 'Get-AotConfiguration'
+            'Connect-AotAzure', 'Set-AotConfiguration', 'Get-AotConfiguration',
+            'Test-AotDependency'
         )
         foreach ($fn in $expected) { $exported | Should -Contain $fn }
     }

@@ -32,6 +32,13 @@ HTML / CSV / JSON reporting.
   - `Az.OperationalInsights`, `Az.Monitor` — monitoring checks
   - `Microsoft.Graph.*` — stale guests, PIM, MFA gaps
 
+Check and install everything in one go:
+
+```powershell
+Test-AotDependency                  # what is missing and which commands it blocks
+Test-AotDependency -InstallMissing  # install the gaps (CurrentUser)
+```
+
 ## Install
 
 ```powershell
@@ -71,7 +78,7 @@ New-AotReport -OutputPath ./out -RequiredTag Owner, CostCenter, Environment
 | **Cost** | `Get-AotUnattachedDisk`, `Get-AotIdlePublicIp`, `Get-AotEmptyResourceGroup`, `Get-AotReservedInstanceRecommendation` |
 | **Monitoring** | `Get-AotDiagnosticSetting`, `Test-AotLogAnalytics`, `Get-AotMonitorAlert`, `Get-AotActionGroup` |
 | **Reports** | `New-AotReport`, `Export-AotHtmlReport`, `Export-AotCsvReport`, `Export-AotJsonReport` |
-| **Core** | `Connect-AotAzure`, `Set-AotConfiguration`, `Get-AotConfiguration` |
+| **Core** | `Connect-AotAzure`, `Set-AotConfiguration`, `Get-AotConfiguration`, `Test-AotDependency` |
 
 Every collector accepts `-SubscriptionId` (one or more) and defaults to **all
 enabled subscriptions** in the current context.

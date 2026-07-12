@@ -93,6 +93,26 @@ Describe 'Invoke-AotOperation retry' {
     }
 }
 
+Describe 'Test-AotDependency' {
+    It 'reports one row per dependency with install status' {
+        $deps = Test-AotDependency
+        @($deps).Count | Should -BeGreaterThan 10
+        $deps | Where-Object Module -eq 'Az.Accounts' | ForEach-Object {
+            $_.Required | Should -BeTrue
+            $_.Installed | Should -BeTrue      # required by the toolkit's own manifest
+        }
+        # every row names at least one command it enables
+        $deps | ForEach-Object { @($_.EnablesCommands).Count | Should -BeGreaterThan 0 }
+    }
+
+    It 'does not install anything without -InstallMissing' {
+        InModuleScope AzureOperationsToolkit {
+            Mock Install-Module { throw 'should not be called' }
+            { Test-AotDependency | Out-Null } | Should -Not -Throw
+        }
+    }
+}
+
 Describe 'Configuration' {
     It 'updates only supplied keys' {
         $before = Get-AotConfiguration

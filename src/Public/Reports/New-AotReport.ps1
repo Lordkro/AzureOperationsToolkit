@@ -54,6 +54,16 @@ function New-AotReport {
     if (-not (Test-Path $OutputPath)) { New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null }
     $subParam = if ($SubscriptionId) { @{ SubscriptionId = $SubscriptionId } } else { @{} }
 
+    # Pre-flight: announce every collector that will be skipped for a missing
+    # module, in one place, before the run starts.
+    $missing = Test-AotDependency | Where-Object { -not $_.Installed }
+    foreach ($dep in $missing) {
+        Write-AotLog -Level Warning -Operation 'Report' -Message (
+            "Module '$($dep.Module)' is not installed; skipping: $($dep.EnablesCommands -join ', '). " +
+            "Run Test-AotDependency -InstallMissing to enable."
+        )
+    }
+
     # Map of module -> collector scriptblocks. Each is wrapped so a failure is
     # logged and skipped rather than aborting the whole report.
     $collectors = [ordered]@{

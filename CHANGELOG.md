@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-12
+
+### Added
+
+- `Test-AotDependency`: reports which optional modules are installed and which
+  toolkit commands each one enables; `-InstallMissing` installs the gaps from
+  PSGallery (CurrentUser).
+- `New-AotReport` pre-flight: every collector that will be skipped for a missing
+  module is announced once, up front, with the install hint.
+- Graph collectors (`Get-AotStaleGuestAccount`, `Get-AotMfaGap`,
+  `Get-AotPimAssignment`) now fail fast with the exact `Connect-MgGraph -Scopes`
+  command needed instead of an opaque Graph auth error, and warn when the
+  connected session is missing an expected scope.
+
 ## [1.0.2] - 2026-07-12
 
 ### Changed
@@ -73,7 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pester test suite, PSScriptAnalyzer configuration, task-based `build.ps1`,
   GitHub Actions CI (lint + test matrix) and tag-triggered PSGallery publish.
 
-[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Lordkro/AzureOperationsToolkit/releases/tag/v1.0.0

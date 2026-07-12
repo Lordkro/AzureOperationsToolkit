@@ -22,8 +22,9 @@ function Get-AotPimAssignment {
     )
 
     if (-not (Get-Command Get-MgRoleManagementDirectoryRoleEligibilitySchedule -ErrorAction SilentlyContinue)) {
-        throw 'Microsoft.Graph.Identity.Governance is required for Get-AotPimAssignment.'
+        throw 'Microsoft.Graph.Identity.Governance is required for Get-AotPimAssignment. Run: Test-AotDependency -InstallMissing'
     }
+    Assert-AotGraphConnection -RequiredScopes 'RoleManagement.Read.Directory'
 
     $roleDefs = Invoke-AotOperation -Operation 'PimRoleDefs' -ScriptBlock {
         Get-MgRoleManagementDirectoryRoleDefinition -All

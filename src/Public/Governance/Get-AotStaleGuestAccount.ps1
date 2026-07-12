@@ -21,8 +21,9 @@ function Get-AotStaleGuestAccount {
     )
 
     if (-not (Get-Command Get-MgUser -ErrorAction SilentlyContinue)) {
-        throw 'Microsoft.Graph.Users module is required for Get-AotStaleGuestAccount. Install-Module Microsoft.Graph.'
+        throw 'Microsoft.Graph.Users is required for Get-AotStaleGuestAccount. Run: Test-AotDependency -InstallMissing'
     }
+    Assert-AotGraphConnection -RequiredScopes 'User.Read.All', 'AuditLog.Read.All'
 
     $cutoff = (Get-Date).AddDays(-$StaleDays)
     Write-AotLog -Level Information -Operation 'StaleGuest' -Message "Guests idle since $($cutoff.ToString('yyyy-MM-dd'))"

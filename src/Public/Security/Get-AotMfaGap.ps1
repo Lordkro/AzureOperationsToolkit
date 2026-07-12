@@ -21,8 +21,9 @@ function Get-AotMfaGap {
     )
 
     if (-not (Get-Command Get-MgReportAuthenticationMethodUserRegistrationDetail -ErrorAction SilentlyContinue)) {
-        throw 'Microsoft.Graph.Reports is required for Get-AotMfaGap.'
+        throw 'Microsoft.Graph.Reports is required for Get-AotMfaGap. Run: Test-AotDependency -InstallMissing'
     }
+    Assert-AotGraphConnection -RequiredScopes 'UserAuthenticationMethod.Read.All', 'AuditLog.Read.All'
 
     Write-AotLog -Level Information -Operation 'MfaGap' -Message 'Evaluating MFA registration'
 
