@@ -21,7 +21,11 @@ function Get-AotTagKey {
     $keys = @(
         if ($null -eq $Tags) { }
         elseif ($Tags -is [System.Collections.IDictionary]) { $Tags.Keys }
-        else { $Tags.PSObject.Properties.Name }
+        else {
+            # Explicit loop: member enumeration (.Properties.Name) on an object
+            # with zero properties throws under StrictMode.
+            foreach ($p in $Tags.PSObject.Properties) { $p.Name }
+        }
     )
     # Comma operator stops the pipeline unwrapping a 0/1-element array to
     # $null/scalar on return; callers rely on .Count under StrictMode.

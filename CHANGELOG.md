@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-07-13
+
+### Fixed
+
+- `Get-AotResourceInventory` (Resource Graph path) crashed on the first
+  untagged resource: Resource Graph returns empty tags as a pscustomobject
+  with zero properties, and member enumeration over an empty property
+  collection throws under StrictMode. `Get-AotTagKey` now enumerates
+  properties explicitly. Verified against a live tenant.
+
 ## [1.1.3] - 2026-07-12
 
 ### Fixed
@@ -117,7 +127,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pester test suite, PSScriptAnalyzer configuration, task-based `build.ps1`,
   GitHub Actions CI (lint + test matrix) and tag-triggered PSGallery publish.
 
-[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.3...HEAD
+[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.4...HEAD
+[1.1.4]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.0...v1.1.1

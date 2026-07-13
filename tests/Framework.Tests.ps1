@@ -46,6 +46,9 @@ Describe 'Get-AotTagKey' {
             (Get-AotTagKey -Tags @{ Owner = 'a'; Env = 'p' }).Count | Should -Be 2
             # Resource Graph returns tags as a pscustomobject, not a hashtable.
             (Get-AotTagKey -Tags ([pscustomobject]@{ Owner = 'a' })).Count | Should -Be 1
+            # ... and an untagged resource arrives as a pscustomobject with zero
+            # properties, which broke member enumeration under StrictMode.
+            (Get-AotTagKey -Tags ([pscustomobject]@{})).Count | Should -Be 0
         }
     }
 }
