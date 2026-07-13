@@ -17,6 +17,7 @@ function Set-AotConfiguration {
         [ValidateRange(0, 10)][int]$MaxRetryCount,
         [ValidateRange(0, 60)][int]$RetryDelaySeconds,
         [ValidateRange(1, 64)][int]$ThrottleLimit,
+        [ValidateRange(1, 128)][int]$ResourceScanThrottleLimit,
         [ValidateRange(1, 3650)][int]$StaleGuestDays,
         [ValidateRange(1, 365)][int]$PimExpiryWindowDays
     )

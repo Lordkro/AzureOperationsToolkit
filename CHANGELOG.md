@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-07-13
+
+### Changed
+
+- `Get-AotDiagnosticSetting` and `Get-AotKeyVaultAudit` — the two remaining
+  outer-sequential collectors — now run tenant-flat:
+  - the resource/vault list comes from one Resource Graph query (fallback:
+    parallel sweep); Key Vault control-plane posture (soft-delete, purge
+    protection, public network access, RBAC model) is read straight from the
+    ARG row, eliminating one `Get-AzKeyVault` call per vault;
+  - the unavoidable per-resource / per-vault calls (diagnostic settings,
+    data-plane expiry scans) run in a single flat parallel loop across the
+    whole tenant with per-runspace subscription contexts, instead of one
+    parallel pool per subscription;
+  - `Get-AotDiagnosticSetting` first probes one resource per type — support
+    for diagnostic settings is a type-level property, so unsupported types
+    are ruled out wholesale (42 of 94 types on the reference tenant);
+  - new `ResourceScanThrottleLimit` setting (default 24) controls these
+    I/O-bound flat scans independently of the subscription-sweep
+    `ThrottleLimit`.
+
+  Measured live on a 42-subscription tenant: diagnostic-setting coverage
+  22.3 min → 8.6 min for identical findings; the whole collector previously
+  ran one subscription at a time.
+
 ## [1.3.0] - 2026-07-13
 
 ### Changed
@@ -188,7 +213,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pester test suite, PSScriptAnalyzer configuration, task-based `build.ps1`,
   GitHub Actions CI (lint + test matrix) and tag-triggered PSGallery publish.
 
-[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.4...v1.2.0

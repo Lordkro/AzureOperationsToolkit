@@ -17,7 +17,8 @@ $script:AotConfig = [ordered]@{
     LogLevel         = 'Information'   # Verbose | Information | Warning | Error
     MaxRetryCount    = 3
     RetryDelaySeconds = 2
-    ThrottleLimit    = 8               # default parallelism for ForEach-Object -Parallel
+    ThrottleLimit    = 8               # default parallelism for subscription sweeps
+    ResourceScanThrottleLimit = 24     # parallelism for flat per-resource scans (I/O bound)
     StaleGuestDays   = 90
     PimExpiryWindowDays = 14
 }
