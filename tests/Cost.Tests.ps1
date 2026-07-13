@@ -14,6 +14,11 @@ Describe 'Get-AotReservedInstanceRecommendation (mocked Azure)' -Skip:(-not (Get
     It 'uses -Filter on Az.Advisor 3.x and reads the typed ExtendedProperty shape' {
         InModuleScope AzureOperationsToolkit {
             $script:AotSubscriptionCache.Clear()
+            # Force the per-subscription fallback: the Resource Graph fast path
+            # would hit live Azure, so make it fail and exercise the fallback.
+            if (Get-Command Search-AzGraph -ErrorAction SilentlyContinue) {
+                Mock Search-AzGraph { throw 'graph disabled for test' }
+            }
             Mock Get-AzContext { [pscustomobject]@{ Account = 'test' } }
             Mock Get-AzSubscription { @([pscustomobject]@{ Id = 's1'; Name = 'Sub A'; State = 'Enabled' }) }
             Mock Set-AzContext { }
@@ -56,6 +61,11 @@ Describe 'Get-AotReservedInstanceRecommendation (mocked Azure)' -Skip:(-not (Get
     It 'reads a hashtable ExtendedProperty (Az.Advisor 2.x shape)' {
         InModuleScope AzureOperationsToolkit {
             $script:AotSubscriptionCache.Clear()
+            # Force the per-subscription fallback: the Resource Graph fast path
+            # would hit live Azure, so make it fail and exercise the fallback.
+            if (Get-Command Search-AzGraph -ErrorAction SilentlyContinue) {
+                Mock Search-AzGraph { throw 'graph disabled for test' }
+            }
             Mock Get-AzContext { [pscustomobject]@{ Account = 'test' } }
             Mock Get-AzSubscription { @([pscustomobject]@{ Id = 's1'; Name = 'Sub A'; State = 'Enabled' }) }
             Mock Set-AzContext { }

@@ -27,15 +27,14 @@ function Get-AotMissingTag {
 
     $subs = Get-AotSubscriptionScope -SubscriptionId $SubscriptionId
 
-    foreach ($sub in $subs) {
-        Write-AotLog -Level Information -Operation 'MissingTag' -Message "Tag compliance for '$($sub.Name)'"
+    $sweep = Invoke-AotSubscriptionSweep -Subscription $subs -Operation 'MissingTag' -Fetch {
+        param($sub)
+        Get-AzResource
+    }
 
-        $resources = Invoke-AotOperation -Operation "MissingTag:$($sub.Id)" -SkipOnError -ScriptBlock {
-            Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
-            Get-AzResource
-        }
-
-        foreach ($r in $resources) {
+    foreach ($entry in $sweep) {
+        $sub = $entry.Subscription
+        foreach ($r in $entry.Items) {
             $present = Get-AotTagKey -Tags $r.Tags
             $missing = $RequiredTag | Where-Object { $_ -notin $present }
             if (-not $missing) { continue }

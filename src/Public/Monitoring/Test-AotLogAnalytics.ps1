@@ -30,15 +30,31 @@ function Test-AotLogAnalytics {
 
     $subs = Get-AotSubscriptionScope -SubscriptionId $SubscriptionId
 
-    foreach ($sub in $subs) {
-        Write-AotLog -Level Information -Operation 'LogAnalytics' -Message "Workspaces for '$($sub.Name)'"
-
-        $workspaces = Invoke-AotOperation -Operation "LogAnalytics:$($sub.Id)" -SkipOnError -ScriptBlock {
-            Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
-            Get-AzOperationalInsightsWorkspace
+    $sweep = Invoke-AotSubscriptionSweep -Subscription $subs -Operation 'LogAnalytics' -Fetch {
+        param($sub)
+        foreach ($w in (Get-AzOperationalInsightsWorkspace)) {
+            # Best-effort heartbeat freshness probe, done inside the sweep so it
+            # parallelises with the rest; errors are carried, not thrown.
+            $hb = $null; $hbError = $null
+            try {
+                $q = 'Heartbeat | summarize LastHeartbeat = max(TimeGenerated)'
+                $res = Invoke-AzOperationalInsightsQuery -WorkspaceId $w.CustomerId -Query $q -ErrorAction Stop
+                $hb = $res.Results.LastHeartbeat
+            }
+            catch { $hbError = $_.Exception.Message }
+            [pscustomobject]@{ Workspace = $w; LastHeartbeat = $hb; HeartbeatError = $hbError }
         }
+    }
 
-        foreach ($w in $workspaces) {
+    foreach ($entry in $sweep) {
+        $sub = $entry.Subscription
+        foreach ($item in $entry.Items) {
+            $w = $item.Workspace
+            if ($item.HeartbeatError) {
+                Write-AotLog -Level Verbose -Operation 'LogAnalytics' `
+                    -Message "Heartbeat query skipped for '$(Get-AotMember $w 'Name')': $($item.HeartbeatError)"
+            }
+
             # Workspace shapes vary across Az.OperationalInsights versions.
             $retention = (Get-AotMember $w 'RetentionInDays') ?? (Get-AotMember $w 'retentionInDays')
             $provState = Get-AotMember $w 'ProvisioningState'
@@ -47,19 +63,9 @@ function Test-AotLogAnalytics {
             if ($null -ne $retention -and $retention -lt $MinRetentionDays) { $issues += "RetentionBelow${MinRetentionDays}d" }
             if ($provState -and $provState -ne 'Succeeded') { $issues += "ProvisioningState:$provState" }
 
-            # Best-effort heartbeat freshness check.
-            $lastHeartbeat = $null
-            try {
-                $q = 'Heartbeat | summarize LastHeartbeat = max(TimeGenerated)'
-                $res = Invoke-AzOperationalInsightsQuery -WorkspaceId $w.CustomerId -Query $q -ErrorAction Stop
-                $lastHeartbeat = $res.Results.LastHeartbeat
-                if ($lastHeartbeat -and ([datetime]$lastHeartbeat -lt (Get-Date).AddHours(-24))) {
-                    $issues += 'NoHeartbeat24h'
-                }
-            }
-            catch {
-                Write-AotLog -Level Verbose -Operation 'LogAnalytics' `
-                    -Message "Heartbeat query skipped for '$($w.Name)': $($_.Exception.Message)"
+            $lastHeartbeat = $item.LastHeartbeat
+            if ($lastHeartbeat -and ([datetime]$lastHeartbeat -lt (Get-Date).AddHours(-24))) {
+                $issues += 'NoHeartbeat24h'
             }
 
             New-AotFinding -Category 'Monitoring' -Type 'LogAnalyticsWorkspace' `

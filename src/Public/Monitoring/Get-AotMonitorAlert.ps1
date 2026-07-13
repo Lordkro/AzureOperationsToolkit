@@ -21,41 +21,41 @@ function Get-AotMonitorAlert {
 
     $subs = Get-AotSubscriptionScope -SubscriptionId $SubscriptionId
 
-    foreach ($sub in $subs) {
-        Write-AotLog -Level Information -Operation 'MonitorAlert' -Message "Alert rules for '$($sub.Name)'"
-
-        $rules = Invoke-AotOperation -Operation "MonitorAlert:$($sub.Id)" -SkipOnError -ScriptBlock {
-            Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
-
-            # Property names differ across Az.Monitor generations (e.g. newer
-            # ScheduledQueryRule output has no ResourceGroupName); probe safely
-            # and derive the resource group from the ARM id instead.
-            $normalise = {
-                param($rule, $kind)
-                $id = Get-AotMember $rule 'Id'
-                $rg = (Get-AotMember $rule 'ResourceGroupName') ??
-                      $(if ($id -match '/resourceGroups/([^/]+)/') { $Matches[1] })
-                $enabled = Get-AotMember $rule 'Enabled' -Default $true
-                [pscustomobject]@{
-                    Name    = (Get-AotMember $rule 'Name')
-                    Id      = $id
-                    Enabled = -not ($enabled -in $false, 'false', 'False')
-                    Kind    = $kind
-                    Rg      = $rg
-                }
+    $sweep = Invoke-AotSubscriptionSweep -Subscription $subs -Operation 'MonitorAlert' -Fetch {
+        param($sub)
+        # Property names differ across Az.Monitor generations (e.g. newer
+        # ScheduledQueryRule output has no ResourceGroupName); probe via
+        # PSObject (module helpers are unavailable in parallel runspaces) and
+        # derive the resource group from the ARM id instead.
+        $normalise = {
+            param($rule, $kind)
+            $get = { param($o, $n) $p = $o.PSObject.Properties[$n]; if ($p) { $p.Value } }
+            $id = & $get $rule 'Id'
+            $rg = (& $get $rule 'ResourceGroupName') ??
+                  $(if ($id -match '/resourceGroups/([^/]+)/') { $Matches[1] })
+            $enabled = (& $get $rule 'Enabled') ?? $true
+            [pscustomobject]@{
+                Name    = (& $get $rule 'Name')
+                Id      = $id
+                Enabled = -not ($enabled -in $false, 'false', 'False')
+                Kind    = $kind
+                Rg      = $rg
             }
-
-            $all = @()
-            if (Get-Command Get-AzMetricAlertRuleV2 -ErrorAction SilentlyContinue) {
-                $all += Get-AzMetricAlertRuleV2 | ForEach-Object { & $normalise $_ 'Metric' }
-            }
-            if (Get-Command Get-AzScheduledQueryRule -ErrorAction SilentlyContinue) {
-                $all += Get-AzScheduledQueryRule | ForEach-Object { & $normalise $_ 'ScheduledQuery' }
-            }
-            $all
         }
 
-        foreach ($rule in $rules) {
+        $all = @()
+        if (Get-Command Get-AzMetricAlertRuleV2 -ErrorAction SilentlyContinue) {
+            $all += Get-AzMetricAlertRuleV2 | ForEach-Object { & $normalise $_ 'Metric' }
+        }
+        if (Get-Command Get-AzScheduledQueryRule -ErrorAction SilentlyContinue) {
+            $all += Get-AzScheduledQueryRule | ForEach-Object { & $normalise $_ 'ScheduledQuery' }
+        }
+        $all
+    }
+
+    foreach ($entry in $sweep) {
+        $sub = $entry.Subscription
+        foreach ($rule in $entry.Items) {
             New-AotFinding -Category 'Monitoring' -Type 'AlertRule' `
                 -Name $rule.Name -ResourceId $rule.Id -ResourceGroup $rule.Rg `
                 -Severity ($rule.Enabled ? 'Informational' : 'Medium') `

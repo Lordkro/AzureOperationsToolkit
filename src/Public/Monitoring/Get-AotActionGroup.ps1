@@ -25,15 +25,14 @@ function Get-AotActionGroup {
 
     $subs = Get-AotSubscriptionScope -SubscriptionId $SubscriptionId
 
-    foreach ($sub in $subs) {
-        Write-AotLog -Level Information -Operation 'ActionGroup' -Message "Action groups for '$($sub.Name)'"
+    $sweep = Invoke-AotSubscriptionSweep -Subscription $subs -Operation 'ActionGroup' -Fetch {
+        param($sub)
+        Get-AzActionGroup
+    }
 
-        $groups = Invoke-AotOperation -Operation "ActionGroup:$($sub.Id)" -SkipOnError -ScriptBlock {
-            Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
-            Get-AzActionGroup
-        }
-
-        foreach ($g in $groups) {
+    foreach ($entry in $sweep) {
+        $sub = $entry.Subscription
+        foreach ($g in $entry.Items) {
             # Receiver property names vary across Az.Monitor generations
             # (singular vs plural); probe both shapes safely.
             $receiverProps = @(

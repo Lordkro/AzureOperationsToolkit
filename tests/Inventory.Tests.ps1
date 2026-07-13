@@ -44,6 +44,8 @@ Describe 'Get-AotResourceGroupInventory (mocked Azure)' {
         InModuleScope AzureOperationsToolkit {
             # each test mocks a different subscription set; do not leak the scope cache
             $script:AotSubscriptionCache.Clear()
+            # force the per-subscription path; the Resource Graph fast path would hit live Azure
+            Mock Get-Command -ParameterFilter { $Name -eq 'Search-AzGraph' } -MockWith { $null }
             Mock Get-AzContext { [pscustomobject]@{ Account = 'test' } }
             Mock Get-AzSubscription { @([pscustomobject]@{ Id = 's1'; Name = 'Sub A'; State = 'Enabled' }) }
             Mock Set-AzContext { }
@@ -91,6 +93,11 @@ Describe 'Per-subscription isolation' {
         InModuleScope AzureOperationsToolkit {
             # each test mocks a different subscription set; do not leak the scope cache
             $script:AotSubscriptionCache.Clear()
+            # Force the sequential sweep path: Pester mocks do not propagate
+            # into parallel runspaces.
+            Set-AotConfiguration -ThrottleLimit 1 | Out-Null
+            # force the per-subscription path; the Resource Graph fast path would hit live Azure
+            Mock Get-Command -ParameterFilter { $Name -eq 'Search-AzGraph' } -MockWith { $null }
             Mock Get-AzContext { [pscustomobject]@{ Account = 'test' } }
             Mock Get-AzSubscription {
                 @(
@@ -107,6 +114,8 @@ Describe 'Per-subscription isolation' {
             $findings = Get-AotUnattachedDisk 3>$null
             @($findings).Count | Should -Be 1
             $findings[0].SubscriptionName | Should -Be 'Sub Good'
+
+            Set-AotConfiguration -ThrottleLimit 8 | Out-Null
         }
     }
 }
@@ -116,6 +125,8 @@ Describe 'Get-AotUnattachedDisk (mocked Azure)' {
         InModuleScope AzureOperationsToolkit {
             # each test mocks a different subscription set; do not leak the scope cache
             $script:AotSubscriptionCache.Clear()
+            # force the per-subscription path; the Resource Graph fast path would hit live Azure
+            Mock Get-Command -ParameterFilter { $Name -eq 'Search-AzGraph' } -MockWith { $null }
             Mock Get-AzContext { [pscustomobject]@{ Account = 'test' } }
             Mock Get-AzSubscription { @([pscustomobject]@{ Id = 's1'; Name = 'Sub A'; State = 'Enabled' }) }
             Mock Set-AzContext { }

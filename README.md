@@ -16,8 +16,12 @@ HTML / CSV / JSON reporting.
   throttling; a failed collector never sinks a full report run.
 - **Observable** — structured, level-filtered logging to stream and daily JSON
   log file.
-- **Parallel** — resource-level lookups (Key Vault audit, diagnostic-setting
-  coverage) fan out with `ForEach-Object -Parallel`.
+- **Fast on large tenants** — most collectors run one tenant-wide Azure
+  Resource Graph query (seconds regardless of subscription count) with an
+  automatic fallback to a parallel per-subscription sweep; resource-level
+  lookups (Key Vault audit, diagnostic-setting coverage) fan out with
+  `ForEach-Object -Parallel`. Tune fan-out with
+  `Set-AotConfiguration -ThrottleLimit N` (1 = fully sequential).
 - **Tested & linted** — Pester suite with code coverage, PSScriptAnalyzer, and a
   cross-platform GitHub Actions matrix.
 

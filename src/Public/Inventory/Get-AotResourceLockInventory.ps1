@@ -17,15 +17,14 @@ function Get-AotResourceLockInventory {
 
     $subs = Get-AotSubscriptionScope -SubscriptionId $SubscriptionId
 
-    foreach ($sub in $subs) {
-        Write-AotLog -Level Information -Operation 'LockInventory' -Message "Resource locks for '$($sub.Name)'"
+    $sweep = Invoke-AotSubscriptionSweep -Subscription $subs -Operation 'LockInventory' -Fetch {
+        param($sub)
+        Get-AzResourceLock
+    }
 
-        $locks = Invoke-AotOperation -Operation "LockInventory:$($sub.Id)" -SkipOnError -ScriptBlock {
-            Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
-            Get-AzResourceLock
-        }
-
-        foreach ($l in $locks) {
+    foreach ($entry in $sweep) {
+        $sub = $entry.Subscription
+        foreach ($l in $entry.Items) {
             New-AotFinding -Category 'Inventory' -Type 'ResourceLock' `
                 -Name $l.Name -ResourceId $l.ResourceId `
                 -ResourceGroup $l.ResourceGroupName `

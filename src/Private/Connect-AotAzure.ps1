@@ -56,6 +56,7 @@ function Connect-AotAzure {
         }
         Write-AotLog -Level Information -Operation 'Connect' -Message 'Azure sign-in complete.'
         $script:AotSubscriptionCache.Clear()
+        $script:AotContextCache.Clear()
     }
 
     if ($SubscriptionId) {

@@ -26,6 +26,11 @@ $script:AotConfig = [ordered]@{
 # Get-AotSubscriptionScope and cleared by Connect-AotAzure.
 $script:AotSubscriptionCache = @{}
 
+# Cache of per-subscription Azure context objects (subscription id -> context),
+# built once by Get-AotSubscriptionContext for parallel sweeps and cleared by
+# Connect-AotAzure.
+$script:AotContextCache = @{}
+
 $folders = @('Private', 'Public')
 foreach ($folder in $folders) {
     $path = Join-Path $script:ModuleRoot $folder

@@ -21,15 +21,14 @@ function Get-AotDirectUserAssignment {
 
     $subs = Get-AotSubscriptionScope -SubscriptionId $SubscriptionId
 
-    foreach ($sub in $subs) {
-        Write-AotLog -Level Information -Operation 'DirectUserAssignment' -Message "Direct user grants for '$($sub.Name)'"
+    $sweep = Invoke-AotSubscriptionSweep -Subscription $subs -Operation 'DirectUserAssignment' -Fetch {
+        param($sub)
+        Get-AzRoleAssignment | Where-Object { $_.ObjectType -eq 'User' }
+    }
 
-        $assignments = Invoke-AotOperation -Operation "DirectUserAssignment:$($sub.Id)" -SkipOnError -ScriptBlock {
-            Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
-            Get-AzRoleAssignment | Where-Object { $_.ObjectType -eq 'User' }
-        }
-
-        foreach ($a in $assignments) {
+    foreach ($entry in $sweep) {
+        $sub = $entry.Subscription
+        foreach ($a in $entry.Items) {
             $name = if ([string]::IsNullOrWhiteSpace($a.DisplayName)) { $a.SignInName ?? $a.ObjectId } else { $a.DisplayName }
             New-AotFinding -Category 'Governance' -Type 'DirectUserAssignment' `
                 -Name $name -ResourceId $a.RoleAssignmentId -Severity 'Low' `

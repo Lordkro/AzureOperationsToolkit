@@ -21,16 +21,16 @@ function Get-AotTagInventory {
 
     $subs = Get-AotSubscriptionScope -SubscriptionId $SubscriptionId
 
-    foreach ($sub in $subs) {
-        Write-AotLog -Level Information -Operation 'TagInventory' -Message "Tag usage for '$($sub.Name)'"
+    $sweep = Invoke-AotSubscriptionSweep -Subscription $subs -Operation 'TagInventory' -Fetch {
+        param($sub)
+        Get-AzResource
+    }
 
-        $resources = Invoke-AotOperation -Operation "TagInventory:$($sub.Id)" -SkipOnError -ScriptBlock {
-            Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
-            Get-AzResource
-        }
+    foreach ($entry in $sweep) {
+        $sub = $entry.Subscription
 
         $tally = @{}   # key -> @{ Count = int; Values = hashset }
-        foreach ($r in $resources) {
+        foreach ($r in $entry.Items) {
             if (-not $r.Tags) { continue }
             foreach ($key in $r.Tags.Keys) {
                 if (-not $tally.ContainsKey($key)) {

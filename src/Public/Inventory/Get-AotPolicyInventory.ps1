@@ -17,15 +17,14 @@ function Get-AotPolicyInventory {
 
     $subs = Get-AotSubscriptionScope -SubscriptionId $SubscriptionId
 
-    foreach ($sub in $subs) {
-        Write-AotLog -Level Information -Operation 'PolicyInventory' -Message "Policy assignments for '$($sub.Name)'"
+    $sweep = Invoke-AotSubscriptionSweep -Subscription $subs -Operation 'PolicyInventory' -Fetch {
+        param($sub)
+        Get-AzPolicyAssignment
+    }
 
-        $assignments = Invoke-AotOperation -Operation "PolicyInventory:$($sub.Id)" -SkipOnError -ScriptBlock {
-            Set-AzContext -SubscriptionId $sub.Id -ErrorAction Stop | Out-Null
-            Get-AzPolicyAssignment
-        }
-
-        foreach ($p in $assignments) {
+    foreach ($entry in $sweep) {
+        $sub = $entry.Subscription
+        foreach ($p in $entry.Items) {
             # Older Az nested details under .Properties; newer Az flattens them.
             $props = (Get-AotMember $p 'Properties') ?? $p
             New-AotFinding -Category 'Inventory' -Type 'PolicyAssignment' `

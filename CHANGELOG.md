@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-07-13
+
+### Changed
+
+- **Large-tenant performance overhaul.** Collectors no longer loop
+  subscriptions sequentially with `Set-AzContext`:
+  - **Resource Graph fast paths** (one tenant-wide paged query, seconds
+    regardless of subscription count) for resource inventory, resource groups,
+    empty resource groups, unattached disks, idle public IPs, Defender plans,
+    policy violations and Advisor cost recommendations. Measured live on a
+    42-subscription tenant: policy violations 6,361 findings in 13s, full
+    resource inventory 2,744 findings in 6.5s, empty resource groups 87s → 6.4s.
+  - **Parallel subscription sweeps** (`Invoke-AotSubscriptionSweep`) for
+    everything else: fetches fan out across subscriptions with per-runspace
+    contexts (via `$PSDefaultParameterValues` + a cached per-subscription
+    context map), inline transient-throttling retry, and per-subscription
+    failure isolation. `ThrottleLimit` (default 8) controls the fan-out;
+    setting it to 1 restores fully sequential behaviour.
+  - Every fast path falls back to the sweep automatically if Resource Graph
+    is unavailable or the query fails.
+
+### Added
+
+- `Invoke-AotGraphQuery` (private): paged, tenant- or subscription-scoped
+  Resource Graph queries handling both Az.ResourceGraph result shapes.
+- `Get-AotSubscriptionContext` (private): cached per-subscription context map,
+  cleared by `Connect-AotAzure`.
+
+### Known behaviour notes
+
+- The empty-resource-group fast path counts resources via the ARG `resources`
+  table, which omits some hidden resource types; it may flag a few more groups
+  as empty than the ARM-based fallback. Findings remain Informational.
+
 ## [1.2.1] - 2026-07-13
 
 ### Fixed
@@ -154,7 +188,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pester test suite, PSScriptAnalyzer configuration, task-based `build.ps1`,
   GitHub Actions CI (lint + test matrix) and tag-triggered PSGallery publish.
 
-[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.4...v1.2.0
 [1.1.4]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.3...v1.1.4
