@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-13
+
+### Changed
+
+- HTML report redesigned as a dark-mode-first dashboard (light mode via
+  `prefers-color-scheme`):
+  - severity stat tiles that act as one-click filters
+  - a filter row: full-text search, severity and category selectors, live count
+  - one unified findings table with click-to-sort columns (severity sorts by
+    rank, aria-sort on headers, sticky header)
+  - Detail rendered as readable key/value pairs with overflow behind an
+    expandable "+N more" instead of a raw JSON blob
+  - severity conveyed by a colored dot plus text label, never color alone;
+    all content HTML-encoded as before
+  - still a single self-contained file with no external assets; verified in a
+    real browser against a 15,974-finding report in both color schemes
+
 ## [1.1.4] - 2026-07-13
 
 ### Fixed
@@ -127,7 +144,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pester test suite, PSScriptAnalyzer configuration, task-based `build.ps1`,
   GitHub Actions CI (lint + test matrix) and tag-triggered PSGallery publish.
 
-[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.4...HEAD
+[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.4...v1.2.0
 [1.1.4]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.1...v1.1.2

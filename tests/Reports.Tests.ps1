@@ -53,8 +53,21 @@ Describe 'Export-AotHtmlReport' {
         $script:sample | Export-AotHtmlReport -Path $path -Title 'Test' | Out-Null
         $html = Get-Content $path -Raw
         $html | Should -Match '<title>Test</title>'
-        # The raw <script> from the detail must be HTML-encoded, not literal.
-        $html | Should -Not -Match '<script>'
-        $html | Should -Match '&lt;script&gt;'
+        # The raw <script> payload from the detail must be HTML-encoded, not
+        # injected literally (the page's own sorting <script> is expected).
+        $html | Should -Not -Match 'user1@x\.com <script>'
+        $html | Should -Match 'user1@x\.com &lt;script&gt;'
+    }
+
+    It 'renders sortable headers, severity tiles and filters' {
+        $path = Join-Path $script:outDir 'r2.html'
+        $script:sample | Export-AotHtmlReport -Path $path | Out-Null
+        $html = Get-Content $path -Raw
+        $html | Should -Match 'aria-sort'
+        $html | Should -Match "class='tile' data-sev='High'"
+        $html | Should -Match 'id="sev"'
+        $html | Should -Match 'id="cat"'
+        # detail rendered as key/value pairs, not a JSON blob
+        $html | Should -Match "class='kv'"
     }
 }
