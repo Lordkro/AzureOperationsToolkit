@@ -54,6 +54,13 @@ permissions for unattended runs):
 The commands fail fast with the exact `Connect-MgGraph -Scopes ...` line when
 the session is missing or under-scoped.
 
+> **Directory role required:** sign-in activity and the registration reports are
+> additionally gated behind Entra directory roles — the signed-in account must
+> hold **Global Reader**, **Reports Reader**, **Security Reader** or **Security
+> Administrator**. Scope consent alone yields a 403
+> (`Authentication_RequestFromUnsupportedUserRole`) on `Get-AotStaleGuestAccount`
+> and `Get-AotMfaGap`.
+
 ## Install
 
 ```powershell

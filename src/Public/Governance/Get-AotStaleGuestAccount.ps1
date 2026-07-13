@@ -29,8 +29,21 @@ function Get-AotStaleGuestAccount {
     Write-AotLog -Level Information -Operation 'StaleGuest' -Message "Guests idle since $($cutoff.ToString('yyyy-MM-dd'))"
 
     $guests = Invoke-AotOperation -Operation 'StaleGuest' -ScriptBlock {
-        Get-MgUser -All -Filter "userType eq 'Guest'" `
-            -Property Id, DisplayName, UserPrincipalName, CreatedDateTime, AccountEnabled, SignInActivity
+        try {
+            Get-MgUser -All -Filter "userType eq 'Guest'" `
+                -Property Id, DisplayName, UserPrincipalName, CreatedDateTime, AccountEnabled, SignInActivity
+        }
+        catch {
+            # Graph gates the SignInActivity property behind directory roles, not
+            # just scopes; translate its opaque 403 into the actual requirement.
+            if ($_.Exception.Message -match 'Authentication_RequestFromUnsupportedUserRole|not in the allowed roles') {
+                throw ('Reading SignInActivity requires an Entra directory role on the signed-in account: ' +
+                       'Global Reader, Reports Reader, Security Reader or Security Administrator ' +
+                       '(the User.Read.All/AuditLog.Read.All scopes alone are not enough). ' +
+                       'Assign one of those roles, reconnect with Connect-MgGraph, and retry.')
+            }
+            throw
+        }
     }
 
     foreach ($g in $guests) {

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-07-13
+
+### Fixed
+
+- `Get-AotStaleGuestAccount` and `Get-AotMfaGap` translate Graph's opaque 403
+  (`Authentication_RequestFromUnsupportedUserRole`) into the actual requirement:
+  sign-in activity and registration reports are gated behind an Entra directory
+  role (Global Reader, Reports Reader, Security Reader or Security
+  Administrator) — scope consent alone is not enough. Documented in the README.
+
 ## [1.2.0] - 2026-07-13
 
 ### Changed
@@ -144,7 +154,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pester test suite, PSScriptAnalyzer configuration, task-based `build.ps1`,
   GitHub Actions CI (lint + test matrix) and tag-triggered PSGallery publish.
 
-[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.4...v1.2.0
 [1.1.4]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/Lordkro/AzureOperationsToolkit/compare/v1.1.2...v1.1.3
